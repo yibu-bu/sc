@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="lxsc-timer" />
+        <module name="lxsc-commons" />
+        <module name="lxsc-goods-service" />
+        <module name="lxsc-user-service" />
+        <module name="eureka-server" />
+        <module name="lxsc-orders-service" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="eureka-server" options="-parameters" />
+      <module name="lxsc-goods-service" options="-parameters" />
+      <module name="lxsc-orders-service" options="-parameters" />
+      <module name="lxsc-timer" options="-parameters" />
+      <module name="lxsc-user-service" options="-parameters" />
+    </option>
+  </component>
+</project>
