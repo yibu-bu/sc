@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lxsc.goods.mapper.GoodsInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.lxsc.goods.model.GoodsInfo">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="goods_describe" jdbcType="VARCHAR" property="goodsDescribe"/>
+        <result column="store" jdbcType="INTEGER" property="store"/>
+        <result column="create_time" jdbcType="BIGINT" property="createTime"/>
+        <result column="price" jdbcType="DECIMAL" property="price"/>
+        <result column="cost" jdbcType="DECIMAL" property="cost"/>
+        <result column="publish_status" jdbcType="INTEGER" property="publishStatus"/>
+        <result column="audit_status" jdbcType="INTEGER" property="auditStatus"/>
+        <result column="production_date" jdbcType="DATE" property="productionDate"/>
+        <result column="shelf_life" jdbcType="DATE" property="shelfLife"/>
+        <result column="goods_id" jdbcType="BIGINT" property="goodsId"/>
+        <result column="version" jdbcType="BIGINT" property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, goods_describe, store, create_time, price, cost, publish_status, audit_status,
+        production_date, shelf_life, goods_id, version
+    </sql>
+
+    <!-- 根据商品id查询描述 -->
+    <select id="selectGoodsDescribeByGoodsId" resultType="java.lang.String">
+        select `goods_describe`
+        from g_goods_info
+        where id = #{goodsId};
+    </select>
+
+    <!-- 查询商品单价 -->
+    <select id="selectPriceByGoodsId" resultType="java.math.BigDecimal">
+        select `price`
+        from g_goods_info
+        where id = #{goodsId};
+    </select>
+
+    <!-- 减库存 -->
+    <!-- MySQL的update语句自带锁，只要写好判断条件就可以处理好超卖问题 -->
+    <update id="decrGoodsStore">
+        update g_goods_info
+        set `store` = `store` - #{buyNum}
+        where `id` = #{goodsId}
+          and `store` >= #{buyNum};
+    </update>
+
+    <!-- 回退库存 -->
+    <update id="incrGoodsStore">
+        update g_goods_info
+        set `store` = `store` + #{buyNum}
+        where `id` = #{goodsId}
+          and `store` >= #{buyNum};
+    </update>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from g_goods_info
+        where id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete
+        from g_goods_info
+        where id = #{id,jdbcType=BIGINT}
+    </delete>
+
+    <insert id="insert" parameterType="com.lxsc.goods.model.GoodsInfo">
+        insert into g_goods_info (id, goods_describe, store,
+                                  create_time, price, cost,
+                                  publish_status, audit_status, production_date,
+                                  shelf_life, goods_id, version)
+        values (#{id,jdbcType=BIGINT}, #{goodsDescribe,jdbcType=VARCHAR}, #{store,jdbcType=INTEGER},
+                #{createTime,jdbcType=BIGINT}, #{price,jdbcType=DECIMAL}, #{cost,jdbcType=DECIMAL},
+                #{publishStatus,jdbcType=INTEGER}, #{auditStatus,jdbcType=INTEGER}, #{productionDate,jdbcType=DATE},
+                #{shelfLife,jdbcType=DATE}, #{goodsId,jdbcType=BIGINT}, #{version,jdbcType=BIGINT})
+    </insert>
+
+    <insert id="insertSelective" parameterType="com.lxsc.goods.model.GoodsInfo">
+        insert into g_goods_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="goodsDescribe != null">
+                goods_describe,
+            </if>
+            <if test="store != null">
+                store,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="price != null">
+                price,
+            </if>
+            <if test="cost != null">
+                cost,
+            </if>
+            <if test="publishStatus != null">
+                publish_status,
+            </if>
+            <if test="auditStatus != null">
+                audit_status,
+            </if>
+            <if test="productionDate != null">
+                production_date,
+            </if>
+            <if test="shelfLife != null">
+                shelf_life,
+            </if>
+            <if test="goodsId != null">
+                goods_id,
+            </if>
+            <if test="version != null">
+                version,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=BIGINT},
+            </if>
+            <if test="goodsDescribe != null">
+                #{goodsDescribe,jdbcType=VARCHAR},
+            </if>
+            <if test="store != null">
+                #{store,jdbcType=INTEGER},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=BIGINT},
+            </if>
+            <if test="price != null">
+                #{price,jdbcType=DECIMAL},
+            </if>
+            <if test="cost != null">
+                #{cost,jdbcType=DECIMAL},
+            </if>
+            <if test="publishStatus != null">
+                #{publishStatus,jdbcType=INTEGER},
+            </if>
+            <if test="auditStatus != null">
+                #{auditStatus,jdbcType=INTEGER},
+            </if>
+            <if test="productionDate != null">
+                #{productionDate,jdbcType=DATE},
+            </if>
+            <if test="shelfLife != null">
+                #{shelfLife,jdbcType=DATE},
+            </if>
+            <if test="goodsId != null">
+                #{goodsId,jdbcType=BIGINT},
+            </if>
+            <if test="version != null">
+                #{version,jdbcType=BIGINT},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.lxsc.goods.model.GoodsInfo">
+        update g_goods_info
+        <set>
+            <if test="goodsDescribe != null">
+                goods_describe = #{goodsDescribe,jdbcType=VARCHAR},
+            </if>
+            <if test="store != null">
+                store = #{store,jdbcType=INTEGER},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=BIGINT},
+            </if>
+            <if test="price != null">
+                price = #{price,jdbcType=DECIMAL},
+            </if>
+            <if test="cost != null">
+                cost = #{cost,jdbcType=DECIMAL},
+            </if>
+            <if test="publishStatus != null">
+                publish_status = #{publishStatus,jdbcType=INTEGER},
+            </if>
+            <if test="auditStatus != null">
+                audit_status = #{auditStatus,jdbcType=INTEGER},
+            </if>
+            <if test="productionDate != null">
+                production_date = #{productionDate,jdbcType=DATE},
+            </if>
+            <if test="shelfLife != null">
+                shelf_life = #{shelfLife,jdbcType=DATE},
+            </if>
+            <if test="goodsId != null">
+                goods_id = #{goodsId,jdbcType=BIGINT},
+            </if>
+            <if test="version != null">
+                version = #{version,jdbcType=BIGINT},
+            </if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <update id="updateByPrimaryKey" parameterType="com.lxsc.goods.model.GoodsInfo">
+        update g_goods_info
+        set goods_describe  = #{goodsDescribe,jdbcType=VARCHAR},
+            store           = #{store,jdbcType=INTEGER},
+            create_time     = #{createTime,jdbcType=BIGINT},
+            price           = #{price,jdbcType=DECIMAL},
+            cost            = #{cost,jdbcType=DECIMAL},
+            publish_status  = #{publishStatus,jdbcType=INTEGER},
+            audit_status    = #{auditStatus,jdbcType=INTEGER},
+            production_date = #{productionDate,jdbcType=DATE},
+            shelf_life      = #{shelfLife,jdbcType=DATE},
+            goods_id        = #{goodsId,jdbcType=BIGINT},
+            version         = #{version,jdbcType=BIGINT}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+</mapper>

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lxsc.goods.mapper.EvaluateMapper">
+
+    <!-- resultMap标签用于定义数据库和 Java实体类字段的映射关系 -->
+    <resultMap id="BaseResultMap" type="com.lxsc.goods.model.Evaluate">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <!-- result标签用于定义一对一的数据关系 -->
+        <result column="content" jdbcType="VARCHAR" property="content"/>
+        <result column="score" jdbcType="INTEGER" property="score"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="goods_id" jdbcType="BIGINT" property="goodsId"/>
+        <result column="nick_name" jdbcType="VARCHAR" property="nickName"/>
+        <result column="head_portrait" jdbcType="VARCHAR" property="headPortrait"/>
+        <result column="time" jdbcType="VARCHAR" property="time"/>
+        <!-- collection标签用于定义一对多的数据关系 -->
+        <collection property="evaluateImgList"
+                    ofType="com.lxsc.goods.model.EvaluateImg"
+                    column="{evaluateId=id}"
+                    select="selectEvaluateImgByEvaluateId">
+        </collection>
+    </resultMap>
+
+    <!-- 通过 EvaluateId查询评价的图片路径 -->
+    <select id="selectEvaluateImgByEvaluateId" resultType="com.lxsc.goods.model.EvaluateImg">
+        select image_url imageUrl
+        from g_evaluate_img
+        where evaluate_id = #{evaluateId}
+    </select>
+
+    <!-- 有图评价的映射关系 -->
+    <resultMap id="BaseResultMapImg" type="com.lxsc.goods.model.Evaluate">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="content" jdbcType="VARCHAR" property="content"/>
+        <result column="score" jdbcType="INTEGER" property="score"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="goods_id" jdbcType="BIGINT" property="goodsId"/>
+        <result column="nick_name" jdbcType="VARCHAR" property="nickName"/>
+        <result column="head_portrait" jdbcType="VARCHAR" property="headPortrait"/>
+        <result column="time" jdbcType="VARCHAR" property="time"/>
+        <collection property="evaluateImgList"
+                    ofType="com.lxsc.goods.model.EvaluateImg">
+            <id column="eiid" property="id"/>
+            <result column="image_url" property="imageUrl"/>
+        </collection>
+    </resultMap>
+
+    <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.lxsc.goods.model.Evaluate">
+        <result column="time" jdbcType="LONGVARCHAR" property="time"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, content, score, user_id, goods_id
+    </sql>
+
+    <sql id="Blob_Column_List">
+        time
+    </sql>
+
+    <!-- 统计各个评价等级的数量 -->
+    <select id="countEvaluateNum" resultType="map">
+        select (select count(*) from g_evaluate where goods_id = #{goodsId} and score BETWEEN 4 and 5) A,
+               (select count(*) from g_evaluate where goods_id = #{goodsId} and score = 3)             B,
+               (select count(*) from g_evaluate where goods_id = #{goodsId} and score BETWEEN 1 and 2) C,
+               (select count(e.id)
+                from g_evaluate e
+                         inner join (select evaluate_id from g_evaluate_img group by evaluate_id) img
+                                    on e.id = img.evaluate_id
+                where e.goods_id = #{goodsId})                                                         img
+    </select>
+
+    <!-- 分页查询有图评价数据 -->
+    <select id="selectEvaluateHaveImgListPage" resultMap="BaseResultMapImg">
+        select e.*,
+               u.nick_name,
+               ui.head_portrait,
+               ei.id eiid,
+               ei.image_url
+        from g_evaluate e
+                 inner join u_user u
+                            on
+                                e.user_id = u.id
+                 left join u_user_info ui
+                           on
+                               u.id = ui.user_id
+                 inner join g_evaluate_img ei
+                            on
+                                e.id = ei.evaluate_id
+        where e.goods_id = #{goodsId}
+        limit ${skipNum} , ${pageSize}
+    </select>
+
+    <!-- 分页查询评价数据 -->
+    <select id="selectEvaluateListPage" resultMap="BaseResultMap">
+        select e.*,u.nick_name,ui.head_portrait
+        from g_evaluate e
+        inner join u_user u
+        on e.user_id=u.id
+        left join u_user_info ui
+        on u.id=ui.user_id
+        where e.goods_id=#{goodsId}
+        <if test='evaluateLevel=="A"'>
+            and score between 4 and 5
+        </if>
+        <if test='evaluateLevel=="B"'>
+            and score = 3
+        </if>
+        <if test='evaluateLevel=="C"'>
+            and score between 1 and 2
+        </if>
+        limit ${skipNum} , ${pageSize}
+    </select>
+
+    <!-- 根据商品id计算它一共有多少条有图评论 -->
+    <select id="countEvaluateHaveImgByGoodsId" resultType="long">
+        select count(e.id)
+        from g_evaluate e
+                 inner join
+                 (select evaluate_id from g_evaluate_img group by evaluate_id) img
+                 on
+                     e.id = img.evaluate_id
+        where e.goods_id = #{goodsId}
+    </select>
+
+    <!-- 根据商品id计算它一共有多少条评论 -->
+    <select id="countEvaluateByGoodsId" resultType="long">
+        select count(*)
+        from g_evaluate
+        where goods_id = #{goodsId}
+        <if test='evaluateLevel=="A"'>
+            and score between 4 and 5
+        </if>
+        <if test='evaluateLevel=="B"'>
+            and score = 3
+        </if>
+        <if test='evaluateLevel=="C"'>
+            and score between 1 and 2
+        </if>
+    </select>
+
+    <!-- 以下是逆向工程自动生成的方法 -->
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="ResultMapWithBLOBs">
+        select
+        <include refid="Base_Column_List"/>
+        ,
+        <include refid="Blob_Column_List"/>
+        from g_evaluate
+        where id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete
+        from g_evaluate
+        where id = #{id,jdbcType=BIGINT}
+    </delete>
+
+    <insert id="insert" parameterType="com.lxsc.goods.model.Evaluate">
+        insert into g_evaluate (id, content, score,
+                                user_id, goods_id, time)
+        values (#{id,jdbcType=BIGINT}, #{content,jdbcType=VARCHAR}, #{score,jdbcType=INTEGER},
+                #{userId,jdbcType=BIGINT}, #{goodsId,jdbcType=BIGINT}, #{time,jdbcType=LONGVARCHAR})
+    </insert>
+
+    <insert id="insertSelective" parameterType="com.lxsc.goods.model.Evaluate">
+        insert into g_evaluate
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="content != null">
+                content,
+            </if>
+            <if test="score != null">
+                score,
+            </if>
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="goodsId != null">
+                goods_id,
+            </if>
+            <if test="time != null">
+                time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=BIGINT},
+            </if>
+            <if test="content != null">
+                #{content,jdbcType=VARCHAR},
+            </if>
+            <if test="score != null">
+                #{score,jdbcType=INTEGER},
+            </if>
+            <if test="userId != null">
+                #{userId,jdbcType=BIGINT},
+            </if>
+            <if test="goodsId != null">
+                #{goodsId,jdbcType=BIGINT},
+            </if>
+            <if test="time != null">
+                #{time,jdbcType=LONGVARCHAR},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.lxsc.goods.model.Evaluate">
+        update g_evaluate
+        <set>
+            <if test="content != null">
+                content = #{content,jdbcType=VARCHAR},
+            </if>
+            <if test="score != null">
+                score = #{score,jdbcType=INTEGER},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId,jdbcType=BIGINT},
+            </if>
+            <if test="goodsId != null">
+                goods_id = #{goodsId,jdbcType=BIGINT},
+            </if>
+            <if test="time != null">
+                time = #{time,jdbcType=LONGVARCHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.lxsc.goods.model.Evaluate">
+        update g_evaluate
+        set content  = #{content,jdbcType=VARCHAR},
+            score    = #{score,jdbcType=INTEGER},
+            user_id  = #{userId,jdbcType=BIGINT},
+            goods_id = #{goodsId,jdbcType=BIGINT},
+            time     = #{time,jdbcType=LONGVARCHAR}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <update id="updateByPrimaryKey" parameterType="com.lxsc.goods.model.Evaluate">
+        update g_evaluate
+        set content  = #{content,jdbcType=VARCHAR},
+            score    = #{score,jdbcType=INTEGER},
+            user_id  = #{userId,jdbcType=BIGINT},
+            goods_id = #{goodsId,jdbcType=BIGINT}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+</mapper>
